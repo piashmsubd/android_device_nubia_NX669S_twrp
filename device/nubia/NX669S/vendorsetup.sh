@@ -1,0 +1,2 @@
+add_lunch_combo twrp_NX669S-userdebug
+add_lunch_combo twrp_NX669S-eng
