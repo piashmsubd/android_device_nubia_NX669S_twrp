@@ -23,8 +23,11 @@ jobs:
       KERNEL_REPO: piashmsubd/android_kernel_nubia_nx669s_nethunter
 
     steps:
-    - name: Cleanup
-      uses: rokibhasansagar/slimhub_actions@main
+    - name: Cleanup disk space
+      run: |
+        sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+        sudo apt-get clean
+        df -h
 
     - name: Setup Build Environment
       run: |
