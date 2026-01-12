@@ -20,6 +20,7 @@ jobs:
       contents: write
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      KERNEL_REPO: piashmsubd/android_kernel_nubia_nx669s_nethunter
 
     steps:
     - name: Cleanup
@@ -34,12 +35,13 @@ jobs:
           lib32readline-dev lib32z1-dev liblz4-tool libncurses5 \
           libncurses5-dev libsdl1.2-dev libssl-dev libxml2 libxml2-utils \
           lzop pngcrush rsync schedtool squashfs-tools xsltproc zip \
-          zlib1g-dev python3 python-is-python3 openjdk-11-jdk
+          zlib1g-dev python3 python-is-python3 openjdk-11-jdk \
+          gcc-aarch64-linux-gnu libelf-dev
 
     - name: Setup ccache
       uses: hendrikmuhs/ccache-action@v1.2
       with:
-        max-size: 6G
+        max-size: 8G
         key: ccache-twrp-${{ github.event.inputs.MANIFEST_BRANCH }}
 
     - name: Install repo
@@ -54,12 +56,38 @@ jobs:
         git config --global user.name "GitHub Actions"
         git config --global user.email "actions@github.com"
 
-    - name: Initialize repo
+    - name: Clone Kernel Source
+      run: |
+        git clone --depth=1 https://github.com/${{ env.KERNEL_REPO }} kernel
+
+    - name: Build Kernel and DTB
+      run: |
+        cd kernel
+        export ARCH=arm64
+        export SUBARCH=arm64
+        export CROSS_COMPILE=aarch64-linux-gnu-
+        
+        # Use default config
+        if [ -f arch/arm64/configs/nethunter_NX669S_defconfig ]; then
+          make nethunter_NX669S_defconfig
+        elif [ -f arch/arm64/configs/vendor/lahaina-qgki_defconfig ]; then
+          make vendor/lahaina-qgki_defconfig
+        else
+          make defconfig
+        fi
+        
+        # Build kernel and dtbs
+        make -j$(nproc --all) Image dtbs 2>&1 | tail -100
+        
+        echo "=== Kernel build output ==="
+        find . -name "Image" -o -name "*.dtb" | head -20
+
+    - name: Initialize TWRP repo
       run: |
         mkdir workspace && cd workspace
         repo init --depth=1 -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b ${{ github.event.inputs.MANIFEST_BRANCH }}
 
-    - name: Sync Source
+    - name: Sync TWRP Source
       run: |
         cd workspace
         repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
@@ -68,16 +96,26 @@ jobs:
       run: |
         cd workspace
         git clone --depth=1 https://github.com/${{ github.repository }} -b main device/nubia/NX669S
-
-    - name: Check Tree Structure
-      run: |
-        cd workspace
+        
+        # Fix nested structure if exists
         if [ -d "device/nubia/NX669S/device/nubia/NX669S" ]; then
-          echo "Fixing nested directory structure..."
           mv device/nubia/NX669S/device/nubia/NX669S/* device/nubia/NX669S/
           rm -rf device/nubia/NX669S/device
         fi
-        ls -la device/nubia/NX669S/
+
+    - name: Copy Kernel to Device Tree
+      run: |
+        # Copy kernel Image
+        if [ -f kernel/arch/arm64/boot/Image ]; then
+          cp kernel/arch/arm64/boot/Image workspace/device/nubia/NX669S/prebuilt/kernel
+          echo "Kernel copied!"
+        fi
+        
+        # Copy DTBs if available
+        mkdir -p workspace/device/nubia/NX669S/prebuilt/dtb
+        find kernel -name "*.dtb" -exec cp {} workspace/device/nubia/NX669S/prebuilt/dtb/ \; 2>/dev/null || true
+        
+        ls -la workspace/device/nubia/NX669S/prebuilt/
 
     - name: Build TWRP
       run: |
@@ -85,7 +123,7 @@ jobs:
         export ALLOW_MISSING_DEPENDENCIES=true
         export USE_CCACHE=1
         export CCACHE_EXEC=/usr/bin/ccache
-        ccache -M 6G
+        ccache -M 8G
         source build/envsetup.sh
         lunch twrp_NX669S-eng
         mka recoveryimage -j$(nproc --all) 2>&1 | tee build.log
@@ -94,12 +132,9 @@ jobs:
       run: |
         cd workspace
         echo "=== Searching for output files ==="
-        find out -name "*.img" -type f 2>/dev/null || echo "No img files found"
-        echo "=== Out directory structure ==="
-        ls -la out/target/product/ 2>/dev/null || echo "No product directory"
-        if [ -d "out/target/product/NX669S" ]; then
-          ls -la out/target/product/NX669S/
-        fi
+        find out -name "*.img" -type f 2>/dev/null | head -20
+        echo "=== Out directory ==="
+        ls -la out/target/product/NX669S/ 2>/dev/null || echo "No product directory"
 
     - name: Upload recovery.img
       uses: actions/upload-artifact@v4
@@ -129,6 +164,7 @@ jobs:
           
           - **Branch:** ${{ github.event.inputs.MANIFEST_BRANCH }}
           - **Date:** ${{ steps.date.outputs.date }}
+          - **Kernel:** NetHunter (built from source)
           
           ### Flash Instructions
           ```
