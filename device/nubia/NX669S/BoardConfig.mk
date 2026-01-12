@@ -66,9 +66,15 @@ BOARD_KERNEL_IMAGE_NAME := Image
 TARGET_KERNEL_ARCH := arm64
 TARGET_KERNEL_HEADER_ARCH := arm64
 TARGET_PREBUILT_KERNEL := $(DEVICE_PATH)/prebuilt/kernel
-BOARD_PREBUILT_DTBOIMAGE := $(DEVICE_PATH)/prebuilt/dtbo.img
+
+# DTB/DTBO - using prebuilt or skip if not available
 BOARD_INCLUDE_DTB_IN_BOOTIMG := true
+ifneq ($(wildcard $(DEVICE_PATH)/prebuilt/dtbo.img),)
+BOARD_PREBUILT_DTBOIMAGE := $(DEVICE_PATH)/prebuilt/dtbo.img
+endif
+ifneq ($(wildcard $(DEVICE_PATH)/prebuilt/dtb),)
 BOARD_PREBUILT_DTBIMAGE_DIR := $(DEVICE_PATH)/prebuilt/dtb
+endif
 
 # Platform
 TARGET_BOARD_PLATFORM := lahaina
