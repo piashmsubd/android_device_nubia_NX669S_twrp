@@ -88,7 +88,18 @@ jobs:
         ccache -M 6G
         source build/envsetup.sh
         lunch twrp_NX669S-eng
-        mka recoveryimage -j$(nproc --all)
+        mka recoveryimage -j$(nproc --all) 2>&1 | tee build.log
+
+    - name: Find Output Files
+      run: |
+        cd workspace
+        echo "=== Searching for output files ==="
+        find out -name "*.img" -type f 2>/dev/null || echo "No img files found"
+        echo "=== Out directory structure ==="
+        ls -la out/target/product/ 2>/dev/null || echo "No product directory"
+        if [ -d "out/target/product/NX669S" ]; then
+          ls -la out/target/product/NX669S/
+        fi
 
     - name: Upload recovery.img
       uses: actions/upload-artifact@v4
