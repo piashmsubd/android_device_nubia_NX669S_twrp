@@ -7,10 +7,11 @@
 
 # Inherit from common AOSP config
 $(call inherit-product, $(SRC_TARGET_DIR)/product/base.mk)
-$(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit_only.mk)
+$(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
 
-# Inherit from our custom product configuration
-$(call inherit-product, vendor/twrp/config/common.mk)
+# Inherit from TWRP/Omni product configuration
+$(call inherit-product-if-exists, vendor/twrp/config/common.mk)
+$(call inherit-product-if-exists, vendor/omni/config/common.mk)
 
 # Inherit from device
 $(call inherit-product, device/nubia/NX669S/device.mk)
