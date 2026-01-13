@@ -31,7 +31,10 @@ jobs:
 
     - name: Setup Build Environment
       run: |
+        set -euxo pipefail
+        export DEBIAN_FRONTEND=noninteractive
         sudo apt-get update
+        sudo apt-get install -y --no-install-recommends ca-certificates software-properties-common wget
         sudo apt-get install -y --no-install-recommends \
           bc bison build-essential ccache curl flex g++-multilib \
           gcc-multilib git gnupg gperf imagemagick libncurses-dev \
