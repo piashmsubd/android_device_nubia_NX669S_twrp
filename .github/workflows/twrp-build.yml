@@ -39,7 +39,7 @@ jobs:
           lzop pngcrush rsync schedtool squashfs-tools xsltproc zip \
           zlib1g-dev python3 python-is-python3 openjdk-11-jdk \
           gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi libelf-dev liblz4-tool \
-          clang-17 lld-17 llvm-17
+          clang lld llvm
         # Create symlinks for ncurses compatibility
         sudo ln -sf /usr/lib/x86_64-linux-gnu/libncurses.so /usr/lib/x86_64-linux-gnu/libncurses.so.5 2>/dev/null || true
         sudo ln -sf /usr/lib/x86_64-linux-gnu/libtinfo.so /usr/lib/x86_64-linux-gnu/libtinfo.so.5 2>/dev/null || true
@@ -73,8 +73,8 @@ jobs:
         export SUBARCH=arm64
         export CROSS_COMPILE=aarch64-linux-gnu-
         export CROSS_COMPILE_ARM32=arm-linux-gnueabi-
-        export CC=clang-17
-        export LD=ld.lld-17
+        export CC=clang
+        export LD=ld.lld
         export LLVM=1
         
         if [ -x ./build_nethunter.sh ]; then
