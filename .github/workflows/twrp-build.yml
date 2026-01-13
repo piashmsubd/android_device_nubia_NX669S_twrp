@@ -158,29 +158,55 @@ jobs:
     - name: Find Output Files
       run: |
         cd workspace
-        echo "=== Searching for output files ==="
-        find out -name "*.img" -type f 2>/dev/null | head -20
-        echo "=== Out directory ==="
-        ls -la out/target/product/NX669S/ 2>/dev/null || echo "No product directory"
+        echo "=== Searching for all .img files ==="
+        find out -name "*.img" -type f 2>/dev/null || true
+        echo ""
+        echo "=== Checking product directories ==="
+        ls -la out/target/product/ 2>/dev/null || true
+        echo ""
+        echo "=== Checking NX669S directory if exists ==="
+        ls -la out/target/product/NX669S/ 2>/dev/null || echo "NX669S directory not found"
+        echo ""
+        echo "=== Checking for recovery*.img anywhere ==="
+        find out -name "recovery*.img" -type f 2>/dev/null || true
+        echo ""
+        echo "=== Checking for vendor_boot*.img anywhere ==="
+        find out -name "vendor_boot*.img" -type f 2>/dev/null || true
 
     - name: Upload recovery.img
       uses: actions/upload-artifact@v4
       with:
         name: TWRP-recovery-NX669S
-        path: workspace/out/target/product/NX669S/recovery.img
+        path: |
+          workspace/out/target/product/NX669S/recovery.img
+          workspace/out/target/product/*/recovery.img
+          workspace/out/target/product/NX669S/*.img
         if-no-files-found: warn
 
     - name: Upload vendor_boot.img
       uses: actions/upload-artifact@v4
       with:
         name: TWRP-vendor_boot-NX669S
-        path: workspace/out/target/product/NX669S/vendor_boot.img
+        path: |
+          workspace/out/target/product/NX669S/vendor_boot.img
+          workspace/out/target/product/*/vendor_boot.img
         if-no-files-found: warn
 
     - name: Get Build Date
       id: date
       run: echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
 
+    - name: Prepare Release Files
+      run: |
+        mkdir -p release_files
+        # Find and copy all recovery and vendor_boot images
+        find workspace/out -name "recovery.img" -type f -exec cp {} release_files/ \; 2>/dev/null || true
+        find workspace/out -name "vendor_boot.img" -type f -exec cp {} release_files/ \; 2>/dev/null || true
+        # Also copy any other .img files from the product directory
+        find workspace/out/target/product -name "*.img" -type f -exec cp {} release_files/ \; 2>/dev/null || true
+        echo "=== Files prepared for release ==="
+        ls -lah release_files/
+        
     - name: Release
       uses: softprops/action-gh-release@v2
       with:
@@ -201,7 +227,5 @@ jobs:
           ```
           fastboot boot recovery.img
           ```
-        files: |
-          workspace/out/target/product/NX669S/recovery.img
-          workspace/out/target/product/NX669S/vendor_boot.img
+        files: release_files/*
         fail_on_unmatched_files: false
