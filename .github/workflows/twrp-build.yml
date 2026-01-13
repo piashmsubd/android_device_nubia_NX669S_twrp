@@ -104,7 +104,10 @@ jobs:
     - name: Sync TWRP Source
       run: |
         cd workspace
-        repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
+        repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags --current-branch
+        # Clean up to save space
+        rm -rf .repo
+        df -h
 
     - name: Clone Device Tree
       run: |
@@ -136,6 +139,10 @@ jobs:
         find kernel -name "*.dtb" -exec cp {} workspace/device/nubia/NX669S/prebuilt/dtb/ \; 2>/dev/null || true
         
         ls -la workspace/device/nubia/NX669S/prebuilt/
+        
+        # Remove kernel source and build files to save space
+        rm -rf kernel
+        df -h
 
     - name: Build TWRP
       run: |
