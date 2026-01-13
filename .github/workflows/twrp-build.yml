@@ -36,8 +36,8 @@ jobs:
         export DEBIAN_FRONTEND=noninteractive
         apt-get update
         apt-get install -y --no-install-recommends ca-certificates wget \
-          bc bison build-essential ccache curl flex g++-multilib \
-          gcc-multilib git gnupg gperf imagemagick libncurses-dev \
+          bc bison build-essential ccache curl flex \
+          git gnupg gperf imagemagick libncurses-dev \
           libssl-dev libxml2 libxml2-utils device-tree-compiler \
           lzop pngcrush rsync schedtool squashfs-tools xsltproc zip \
           zlib1g-dev python3 python-is-python3 openjdk-17-jdk \
