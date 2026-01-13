@@ -6,16 +6,16 @@ on:
       MANIFEST_BRANCH:
         description: 'TWRP Manifest Branch'
         required: true
-        default: 'twrp-12.1'
+        default: 'twrp-11'
         type: choice
         options:
-          - twrp-12.1
           - twrp-11
+          - twrp-12.1
 
 jobs:
   build:
     name: Build TWRP by ${{ github.actor }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     permissions:
       contents: write
     env:
@@ -36,7 +36,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y --no-install-recommends \
           bc bison build-essential ccache curl flex git gnupg gperf \
-          imagemagick lib32ncurses5-dev lib32z1-dev libncurses-dev \
+          imagemagick lib32ncurses-dev lib32z1-dev libncurses-dev \
           libssl-dev libxml2 libxml2-utils device-tree-compiler \
           lzop pngcrush rsync schedtool squashfs-tools xsltproc zip \
           zlib1g-dev python3 python-is-python3 openjdk-11-jdk \
